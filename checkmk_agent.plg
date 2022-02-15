@@ -1,0 +1,104 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+  <!ENTITY name      "checkmk_agent">
+  <!ENTITY author    "joshbenner">
+  <!ENTITY version   "2022.02.15">
+  <!ENTITY gitURL    "https://raw.githubusercontent.com/&author;/checkmk-agent-unraid/master">
+  <!ENTITY pluginURL "&gitURL;/&name;.plg">
+  <!ENTITY md5       "20dfe47f55475d3ceef8c71bd173db11">
+  <!ENTITY plugin    "/boot/config/plugins/&name;">
+  <!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
+  <!ENTITY xinetd    "xinetd-2.3.15.4-x86_64-1_slonly">
+  <!ENTITY xinetdmd5 "1da784d01bd5c8a8edb05feeef1ac07e">
+]>
+
+<PLUGIN  name="&name;" author="&author;" version="&version;" pluginURL="&pluginURL;" min="6.8.3" support="">
+
+<CHANGES>
+
+### 2022.02.15
+- Initial version
+
+</CHANGES>
+
+<FILE Run="/bin/bash">
+<INLINE>
+rm -f $(ls &plugin;/packages/&name;*.tgz 2>/dev/null|grep -v '&version;')
+rm -f $(ls &plugin;/packages/*.txz 2>/dev/null|grep -v '&xinetd;')
+</INLINE>
+</FILE>
+
+<FILE Name="&plugin;/packages/&name;-&version;.tgz" Run="upgradepkg --install-new">
+<URL>&gitURL;/packages/&name;-&version;.tgz</URL>
+<MD5>&md5;</MD5>
+</FILE>
+
+<FILE Name="&plugin;/packages/&xinetd;.txz" Run="upgradepkg --install-new">
+<URL>&gitURL;/packages/&xinetd;.txz</URL>
+<MD5>&xinetdmd5;</MD5>
+</FILE>
+
+<FILE Name="&emhttp;/README.md">
+<INLINE>
+**checkmk-agent**
+
+checkmk-agent for use with checkmk server. Configures xinetd to listen on 6556,
+activating the agent to collect and return data when contacted by the server.
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash">
+<INLINE>
+
+# Download icon
+if [ ! -f "&plugin;/checkmk.png" ]; then
+  wget -q -nc --show-progress --progress=bar:force:noscroll -O "&plugin;/&name;.png" "https://raw.githubusercontent.com/ich777/docker-templates/master/ich777/images/checkmk.png"
+fi
+
+# Copy, make executable plugin files
+mkdir -p &plugin;/plugins
+mkdir -p /usr/lib/check_mk_agent/plugins
+cp &plugin;/plugins/* /usr/lib/check_mk_agent/plugins
+chmod a+x /usr/lib/check_mk_agent/plugins
+
+# Link configuration
+mkdir -p &plugin;/config
+ln -s &plugin;/config /etc/check_mk
+
+# Install icon
+if [ ! -f "&emhttp;/images/&name;.png" ]; then
+  if [ ! -d "&emhttp;/images" ]; then
+    mkdir -p &emhttp;/images
+  fi
+  cp &plugin;/&name;.png &emhttp;/images/
+fi
+
+# Start xinetd
+if [ -z "$(pidof xinetd)" ]; then
+  xinetd
+fi
+
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+
+echo "----------------------------------------"
+echo "-------Uninstalling checkmk-agent-------"
+echo "----------------------------------------"
+# Kill xinetd and remove plugin related files
+kill $(pidof xinetd) &gt; /dev/null 2&gt;&amp;1
+removepkg &name;-&version;.tgz
+removepkg &xinetd;.tgz
+rm -rf &plugin;
+rm -rf &emhttp;
+echo
+echo "----------------------------------------------------------"
+echo "---------------Checkmk-Agent uninstalled!-----------------"
+echo "----------------------------------------------------------"
+echo
+
+</INLINE>
+</FILE>
+</PLUGIN>
