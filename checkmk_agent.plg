@@ -63,6 +63,9 @@ chmod a+x /usr/lib/check_mk_agent/plugins
 
 # Link configuration
 mkdir -p &plugin;/config
+if [ -d /etc/check_mk ]; then
+  rm -rf /etc/check_mk
+fi
 ln -s &plugin;/config /etc/check_mk
 
 # Install icon
