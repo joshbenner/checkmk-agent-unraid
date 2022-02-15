@@ -59,14 +59,14 @@ fi
 mkdir -p &plugin;/plugins
 mkdir -p /usr/lib/check_mk_agent/plugins
 cp &plugin;/plugins/* /usr/lib/check_mk_agent/plugins
-chmod a+x /usr/lib/check_mk_agent/plugins
+chmod a+x /usr/lib/check_mk_agent/plugins/*
 
 # Link configuration
 mkdir -p &plugin;/config
 if [ -d /etc/check_mk ]; then
   rm -rf /etc/check_mk
 fi
-ln -s &plugin;/config /etc/check_mk
+ln -sf &plugin;/config /etc/check_mk
 
 # Install icon
 if [ ! -f "&emhttp;/images/&name;.png" ]; then
@@ -96,6 +96,7 @@ removepkg &name;-&version;.tgz
 removepkg &xinetd;.tgz
 rm -rf &plugin;
 rm -rf &emhttp;
+rm -rf /etc/check_mk
 echo
 echo "----------------------------------------------------------"
 echo "---------------Checkmk-Agent uninstalled!-----------------"
